@@ -1,0 +1,115 @@
+---
+title: "Homework 3 | SDS 375"
+author: "Nadine Angeles"
+date: "2025-09-30"
+output: pdf_document
+---
+
+The Company should commit to redesigning the web site based on the criteria for success that they laid out.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+# load in libraries
+library(tidyverse)
+library(ggplot2)
+library(readr)
+library(colorfindr)
+library(car)
+
+# read in data
+company <- read_csv("homework3_data.csv")
+company$design <- as.factor(company$design)
+```
+
+Company Colors:
+```{r}
+palette <- get_colors("P.Terry.png")
+palette
+
+plot_colors(palette[1:1000, ])
+cols <- make_palette(palette[1:100, ])
+cols
+
+```
+
+Visualizations:
+```{r}
+
+# Distribution of price by design type
+
+mean_sales <- company |>
+  group_by(design) |>
+  summarise(avg_sales = mean(sales, na.rm = TRUE)) |>
+  arrange(avg_sales)
+
+ggplot(company, aes(x = sales)) +
+  geom_histogram(binwidth = 2, fill = "#3FCDBA", color = "#000000") +
+  facet_grid(design ~ .) +
+  labs(
+    x = "Sales (in dollars)",
+    y = "Count",
+    title = "Distribution of Net Promoter Score by Design"
+  ) +
+  geom_vline(
+    data = mean_sales,
+    aes(xintercept = avg_sales),
+    lwd = .5,
+    linetype = 1,
+    color = "#D92A1C")
+
+
+```
+
+Our graph shows the distribution of sales per web design, with "0" representing the old web design and "1" representing the new design.
+
+Design one has an average sale of about 35 dollars while Design zero has an average sale of about 31 dollars.
+
+```{r}
+# Net Promoter Score by design type
+
+ggplot(company, aes(x = nps, fill = design)) +
+  geom_bar(position = "dodge", color = "#FFFFFF") +
+  labs(
+    x = "Net Promoter Score",
+    y = "Count",
+    title = "Rating by Web Design Type"
+  ) +
+  scale_fill_manual(
+    values = c("1" = "#3FCDBA", "0" = "#D92A1C"))
+
+```
+
+We can see that design 0 tends to have a lower Net Promoter Score, while design 1 is shown to have higher ratings.
+
+Conclusion:
+```{r}
+# Regression for sales by design 
+sales_lm <- lm(sales ~ design + items, data = company)
+summary(sales_lm)
+
+# Add predicted values (yhat) into our data frame
+company$yhat <- sales_lm$fitted.values
+
+# Plot
+ggplot(company, aes(x = items, y = sales, col = design)) +
+  geom_point() +
+  labs(
+    x = "Items",
+    y = "Sales (in dollars)",
+    title = "Sales vs Dollars",
+    col = "Design type"
+  ) +
+  geom_line(aes(y = yhat, col = design)) +
+  scale_color_manual(
+    values = c("1" = "#3FCDBA", "0" = "#D92A1C"))
+  
+```
+Holding the number of items constant, implementing design 1 is expected to increase sales by $2.52 per customer compared to design 0. 
+Thus the redesign will lead to an average increase in sales of at least $1.80 per customer.
+
+
+
+Recommendation:
+Commit to the redesign because it will increase sales
+Alternative statement:
+The redesign would not increase sales even though the data suggest it would.
